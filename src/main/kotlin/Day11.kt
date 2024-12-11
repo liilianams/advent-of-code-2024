@@ -1,45 +1,47 @@
-import java.math.BigInteger
+import kotlin.math.pow
 
-private const val NUMBER_OF_BLINKS = 25
+private const val NUMBER_OF_BLINKS = 75 // use 25 to solve part A and 75 to solve part B
 
 fun main() {
-  val input = getInputAsStrings("Day11").flatMap { it.split(" ").map { it.toBigInteger() } }
-
+  val input = getInputAsStrings("Day11").flatMap { it.split(" ").map { it.toLong() } }
   solveDay11(input)
 }
 
-private fun solveDay11(input: List<BigInteger>) {
-  var result = ArrayDeque(input)
-  var round = 0;
+private fun solveDay11(input: List<Long>) {
+  var result = input.groupingBy { it }.eachCount().mapValues { it.value.toLong() }
 
   repeat(NUMBER_OF_BLINKS) {
-    val tempResult = ArrayDeque<BigInteger>()
-    println(round++)
+    val tempResult = mutableMapOf<Long, Long>()
 
-    while (result.isNotEmpty()) {
-      val stone = result.removeFirst()
+    for ((stone, count) in result) {
       when {
-        stone == BigInteger.ZERO -> tempResult.add(BigInteger.ONE)
+        stone == 0L -> {
+          tempResult.merge(1L, count, Long::plus)
+        }
+
         hasEvenNumberOfDigits(stone) -> {
           val (first, second) = splitStoneIntoTwo(stone)
-          tempResult.add(first)
-          tempResult.add(second)
+          tempResult.merge(first, count, Long::plus)
+          tempResult.merge(second, count, Long::plus)
         }
-        else -> tempResult.add(multiplyBy2024(stone))
+
+        else -> {
+          val newStone = multiplyBy2024(stone)
+          tempResult.merge(newStone, count, Long::plus)
+        }
       }
     }
 
     result = tempResult
   }
 
-  println(result.size)
+  println(result.values.sum())
 }
 
-private fun splitStoneIntoTwo(stone: BigInteger): Pair<BigInteger, BigInteger> {
-  val length = stone.toString().length
-  val halfLength = length / 2
+private fun splitStoneIntoTwo(stone: Long): Pair<Long, Long> {
+  val halfLength = stone.toString().length / 2
 
-  val divisor = BigInteger.TEN.pow(halfLength)
+  val divisor = 10.0.pow(halfLength).toLong()
 
   val first = stone / divisor
   val second = stone % divisor
@@ -47,11 +49,10 @@ private fun splitStoneIntoTwo(stone: BigInteger): Pair<BigInteger, BigInteger> {
   return Pair(first, second)
 }
 
-private fun multiplyBy2024(stone: BigInteger): BigInteger {
-  return stone * BigInteger.valueOf(2024L)
+private fun multiplyBy2024(stone: Long): Long {
+  return stone * 2024L
 }
 
-private fun hasEvenNumberOfDigits(int: BigInteger): Boolean {
-  return int.toString().length % 2 == 0
+private fun hasEvenNumberOfDigits(stone: Long): Boolean {
+  return stone.toString().length % 2 == 0
 }
-
